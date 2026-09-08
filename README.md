@@ -47,6 +47,33 @@ Phase 2 以降には進んでいない。**
 コストを超える数字が出ている。判定は変えていないが、レポートに事実を記載している。
 詳細は [`reports/phase1b_leader_and_squeeze.md`](reports/phase1b_leader_and_squeeze.md)。
 
+## Phase 1c: パラメータ探索と、未使用データでの確認
+
+標準設定に固定してきたパラメータを探索した。ただし探索は必ず「見かけ上良い設定」を生むため、
+**Part A（探索）と Part B（確認）でデータを完全に分離**した。
+
+- **Part A**: 2025-01..2026-05（既に何度も見ている期間）で 65 設定 × 3 時間足 × 6 ホライズン
+  = 1,170 セルを探索。p 値も信頼区間も計算していない（多重比較の産物が「発見」に見えるため）。
+  選定ルール（近傍安定性・3 銘柄符号一致）は**グリッドを回す前にコミット**した。
+- **Part B**: 2023-01..2024-12（**初アクセス**）で、事前登録した 4 候補のみを検定。
+
+**Part B の合格候補は 0 / 4。** 参考の 24 セル全体を見ても合格条件を満たすセルは 0 件で、
+ルールを破ってスヌーピングしても結論は変わらない。
+
+| # | 設定 | 時間足 | N | Part A 平均ATR | Part B 平均ATR | 残存率 | p値 | CI下限(bps) |
+|---|---|---|---|---:|---:|---:|---:|---:|
+| 1 | ADX length=28 thr=25 | 15m | 12 | +0.375 | +0.141 | +38% | 0.106 | −6.16 |
+| 2 | Squeeze bb=20 kc=30 mult=2.0 | 1h | 3 | +0.346 | **−0.127** | −37% | 0.219 | −22.32 |
+| 3 | ADX length=20 thr=30 | 15m | 12 | +0.321 | +0.157 | +49% | 0.044 | −3.70 |
+| 4 | ADX length=14 thr=25 | 15m | 12 | +0.184 | +0.091 | +49% | 0.064 | −1.63 |
+
+族の地形（自分のスコアと隣接設定スコア中央値の Spearman 相関）:
+ADX +0.66 / WaveTrend +0.79 は「平らな丘」だが、**Squeeze は +0.17 で「孤立した山ばかり」**。
+
+依頼書に定めたとおり、**Squeeze / WaveTrend / ADX の 3 指標については検証を完全終了**した。
+詳細は [`reports/phase1c_exploration.md`](reports/phase1c_exploration.md)（Part A）と
+[`reports/phase1c_confirmation.md`](reports/phase1c_confirmation.md)（Part B）。
+
 ## 構成
 
 | ファイル | 内容 |
@@ -65,6 +92,11 @@ Phase 2 以降には進んでいない。**
 | `phase1b_run.py` | Phase 1b 実行とレポート生成（`--report-only` で再集計なしの再出力）|
 | `tests/test_main_indicators.py` | WaveTrend / ADX の正確性検証（30 項目）|
 | `tests/test_phase1b.py` | Phase 1b の集計ロジックの検算（13 項目）|
+| `phase1c_grid.py` | Phase 1c のグリッド定義と候補選定ルール（実行前に確定）|
+| `phase1c_engine.py` | Phase 1c の評価エンジン（Part A / B で共通）|
+| `phase1c_partA.py` | Part A: 探索とレポート生成 |
+| `phase1c_partB_data.py` | Part B: 2023-2024 データの取得と健全性検査 |
+| `phase1c_partB.py` | Part B: 事前登録した 4 候補のみの検定 |
 | `phase1_run.py` | Phase 1 実行とレポート生成 |
 | `COSTS.md` | コスト前提と中止基準（実行前に確定） |
 
@@ -78,6 +110,9 @@ python3 phase1_release_definition.py     # 追試:      解放イベント定義
 python3 tests/test_main_indicators.py    # Phase 1b: WaveTrend / ADX の正確性 (30 項目)
 python3 tests/test_phase1b.py            # Phase 1b: 集計ロジックの検算 (13 項目)
 python3 phase1b_run.py                   # Phase 1b: 主役 + 補助の検証
+python3 phase1c_partA.py                 # Phase 1c: Part A 探索
+python3 phase1c_partB_data.py            # Phase 1c: Part B データ取得と健全性検査
+python3 phase1c_partB.py                 # Phase 1c: Part B 確認 (判定はここだけ)
 ```
 
 ## データ
@@ -86,6 +121,7 @@ python3 phase1b_run.py                   # Phase 1b: 主役 + 補助の検証
 - 実行環境から `fapi.binance.com` は地域制限（HTTP 451）のため公開ダンプを使用
 - BTCUSDT / ETHUSDT / SOLUSDT × 5m / 15m / 1h
 - 検証期間: 2025-01-01 .. 2026-05-31（全 9 データセットが理論本数と一致、欠損 0 本）
+- Phase 1c Part B: 2023-01-01 .. 2024-12-31 の 15m / 1h（全 6 データセットが理論本数と一致、欠損 0 本）
 - **Hold-out: 2026-06-01 .. 2026-08-31 は封印・未使用**（`data/cache/` は 2026-05 で止まる）
 
 ## 未解決事項
