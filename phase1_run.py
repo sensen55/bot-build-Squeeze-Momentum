@@ -138,6 +138,10 @@ def _write_report(summary, volatility, direction, acceleration,
     add(f"- 対象: {', '.join(SYMBOLS)} / {', '.join(INTERVALS)}")
     add(f"- 期間: {STUDY_START} .. {STUDY_END}（Hold-out 2026-06-01..2026-08-31 は封印・未使用）")
     add(f"- データ: Binance USD-M Futures kline（data.binance.vision）欠損 0 本")
+    add("- 解放イベントの定義: **原典どおり「黒（sqz_on）→ 灰（sqz_off）」**。")
+    add("  旧定義「黒 → 黒以外」との比較は "
+        "[`phase1_release_definition.md`](phase1_release_definition.md) を参照")
+    add("  （このデータでは青（no_sqz）が 0 本のため、両定義のイベント集合は完全に同一だった）。")
     add(f"- 総イベント数: **{total_events:,}**")
     add("")
     add("## 0. 事前に確定した判定ルール（実行前に固定・後から緩めていない）")

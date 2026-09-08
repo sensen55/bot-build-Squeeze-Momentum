@@ -13,6 +13,11 @@ Phase 2 以降には進んでいない。**
 事前に確定した合格条件を満たしたセルは **0 / 18**。
 詳細は [`reports/phase1_event_study.md`](reports/phase1_event_study.md)。
 
+追試として解放イベントの定義を原典どおり（黒 → 灰）に修正したが、
+このデータでは青（no_sqz）が 1 本も発生しないため**イベント集合は完全に同一**で、
+18 セルの数値も完全一致した。結論は変わらない。
+詳細は [`reports/phase1_release_definition.md`](reports/phase1_release_definition.md)。
+
 主要な数字:
 
 | 検定 | 結果 |
@@ -34,6 +39,7 @@ Phase 2 以降には進んでいない。**
 | `tests/tradingview_crosscheck.py` | TradingView 手動照合用の数値ダンプ |
 | `phase1_event_study.py` | Phase 1 のイベント抽出と統計 |
 | `phase1_nearmiss.py` | 最良セルの精査（銘柄別 / 期間分割 / 隣接ホライズン） |
+| `phase1_release_definition.py` | 追試: 解放イベント定義（黒→灰 / 黒→青 / 黒→黒以外）の比較 |
 | `phase1_run.py` | Phase 1 実行とレポート生成 |
 | `COSTS.md` | コスト前提と中止基準（実行前に確定） |
 
@@ -43,6 +49,7 @@ Phase 2 以降には進んでいない。**
 pip install pandas numpy scipy tabulate
 python3 tests/test_squeeze_momentum.py   # Phase 0: 指標の正確性 (28 項目)
 python3 phase1_run.py                    # Phase 1: イベントスタディ
+python3 phase1_release_definition.py     # 追試: 解放イベント定義の比較
 ```
 
 ## データ

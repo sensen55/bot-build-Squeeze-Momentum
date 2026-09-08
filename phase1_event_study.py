@@ -56,6 +56,13 @@ HORIZONS = [1, 3, 6, 12, 24, 48]
 EXTRA_HORIZONS = [36, 60, 72]  # 近傍ホライズンの連続性確認用
 RUN_BUCKETS = [1, 3, 5, 10, 20]
 
+# 解放イベントの定義。既定は原典どおりの "gray" (黒 -> 灰)。
+RELEASE_DEFINITIONS = {
+    "any": "黒 -> 黒以外 (灰 + 青)。旧定義",
+    "gray": "黒 -> 灰 (sqz_off)。原典 Carter / LazyBear の推奨",
+    "blue": "黒 -> 青 (no_sqz)。gray から除外された側",
+}
+
 # COSTS.md より。判定に使うのは最良シナリオ F。
 COST_FLOOR_BPS = 1.0              # Lighter 0% + 穏やか局面の実測スリッページ
 COST_BASE_BPS = 2.0
@@ -77,6 +84,7 @@ class EventTable:
 
     symbol: str
     interval: str
+    definition: str                 # 解放イベントの定義 ("gray" / "blue" / "any")
     events: pd.DataFrame            # 1 行 = 1 イベント
     baseline: pd.DataFrame          # 1 行 = 全バー (ベースライン分布 A)
     bar_move_bps: float             # 1 バーの |リターン| 中央値 (skill 3.7)
@@ -98,7 +106,11 @@ def _assert_contiguous(index: pd.DatetimeIndex, interval: str) -> None:
         )
 
 
-def build_event_table(symbol: str, interval: str) -> EventTable:
+def build_event_table(
+    symbol: str,
+    interval: str,
+    definition: str = "gray",
+) -> EventTable:
     data, report = load_klines(symbol, interval, STUDY_START, STUDY_END, verbose=False)
     if report.missing_count or report.duplicated_times:
         raise ValueError(f"{symbol} {interval}: 欠損/重複あり。先に調査すること。")
@@ -111,6 +123,8 @@ def build_event_table(symbol: str, interval: str) -> EventTable:
     val_norm = indicator["val_norm"].to_numpy(dtype=float)
     atr = indicator["atr_norm"].to_numpy(dtype=float)
     sqz_on = indicator["sqz_on"].to_numpy(dtype=bool)
+    sqz_off = indicator["sqz_off"].to_numpy(dtype=bool)
+    no_sqz = indicator["no_sqz"].to_numpy(dtype=bool)
     squeeze_run = indicator["squeeze_run"].to_numpy(dtype=int)
     val_rising = indicator["val_rising"].to_numpy(dtype=bool)
     bar_count = len(data)
@@ -153,10 +167,26 @@ def build_event_table(symbol: str, interval: str) -> EventTable:
         baseline[f"ret_{horizon}_atr"] = forward_atr[horizon][baseline["index"]]
 
     # --- イベント抽出 --------------------------------------------------------
-    # 解放バー t: sqz_on[t] == False かつ sqz_on[t-1] == True
-    # 継続本数は t-1 時点の連続本数 (= 解放直前までの収縮の長さ)
+    # 解放バー t は、直前バーが黒 (sqz_on) で、当該バーで黒でなくなったバー。
+    # 「黒でなくなった」の中身を 3 通りに分けられるようにしてある:
+    #
+    #   "gray" : sqz_off[t] == True   黒 -> 灰。原典 (Carter / LazyBear) の推奨。
+    #                                 「黒の後、最初の灰でエントリー」
+    #   "blue" : no_sqz[t] == True    黒 -> 青。gray から除外された側
+    #   "any"  : ~sqz_on[t]           黒 -> 黒以外。gray + blue (旧定義)
+    #
+    # 継続本数は t-1 時点の連続本数 (= 解放直前までの収縮の長さ)。
+    if definition == "gray":
+        became = sqz_off
+    elif definition == "blue":
+        became = no_sqz
+    elif definition == "any":
+        became = ~sqz_on
+    else:
+        raise ValueError(f"未知の定義: {definition}")
+
     release = np.zeros(bar_count, dtype=bool)
-    release[1:] = (~sqz_on[1:]) & sqz_on[:-1]
+    release[1:] = became[1:] & sqz_on[:-1]
     release &= baseline_mask
 
     event_index = np.flatnonzero(release)
@@ -172,7 +202,7 @@ def build_event_table(symbol: str, interval: str) -> EventTable:
         events[f"ret_{horizon}_bps"] = forward_bps[horizon][event_index]
         events[f"ret_{horizon}_atr"] = forward_atr[horizon][event_index]
 
-    return EventTable(symbol, interval, events, baseline, bar_move_bps)
+    return EventTable(symbol, interval, definition, events, baseline, bar_move_bps)
 
 
 # ---------------------------------------------------------------------------

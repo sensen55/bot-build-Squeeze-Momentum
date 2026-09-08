@@ -3,6 +3,9 @@
 - 対象: BTCUSDT, ETHUSDT, SOLUSDT / 5m, 15m, 1h
 - 期間: 2025-01-01 .. 2026-06-01（Hold-out 2026-06-01..2026-08-31 は封印・未使用）
 - データ: Binance USD-M Futures kline（data.binance.vision）欠損 0 本
+- 解放イベントの定義: **原典どおり「黒（sqz_on）→ 灰（sqz_off）」**。
+  旧定義「黒 → 黒以外」との比較は [`phase1_release_definition.md`](phase1_release_definition.md) を参照
+  （このデータでは青（no_sqz）が 0 本のため、両定義のイベント集合は完全に同一だった）。
 - 総イベント数: **20,809**
 
 ## 0. 事前に確定した判定ルール（実行前に固定・後から緩めていない）
