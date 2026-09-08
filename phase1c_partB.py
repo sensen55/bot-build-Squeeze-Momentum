@@ -382,7 +382,12 @@ def _write_report(candidates, judgement, reference, scrutiny, alpha) -> None:
             lines.extend(block)
     add("")
 
-    add("### 言えること / 言えないこと")
+    # 時間的な安定性の追加分析を同じレポートに埋め込む
+    from phase1c_stability import build_section
+
+    lines.extend(build_section(candidates))
+
+    add("## 7. 言えること / 言えないこと")
     add("")
     add("- 言える: Part A（2025-2026）で選んだ候補が、Part B（2023-2024）でどうなるか。")
     add("  **探索と確認でデータを完全に分離してある**ので、この判定は「見かけ上良い設定」"
