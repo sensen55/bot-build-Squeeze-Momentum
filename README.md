@@ -1,0 +1,64 @@
+# Squeeze Momentum Indicator [LazyBear] — エッジ検証
+
+TradingView の Squeeze Momentum Indicator [LazyBear] に、PerpDEX の perp 取引で
+コストを超えるエッジが存在するかを検証したプロジェクト。
+
+**目的は bot 化ではなくエッジの有無の判定。**
+
+## 結論
+
+**エッジは確認できなかった。Phase 1（イベントスタディ）で中止基準に到達し、
+Phase 2 以降には進んでいない。**
+
+事前に確定した合格条件を満たしたセルは **0 / 18**。
+詳細は [`reports/phase1_event_study.md`](reports/phase1_event_study.md)。
+
+主要な数字:
+
+| 検定 | 結果 |
+|---|---|
+| 解放時 `val` の符号方向リターン | 5 分足は全ホライズンでマイナス。1 時間足はプラスだが Bonferroni 補正後に有意なセル 0 |
+| スクイーズ解放 → 値幅拡大 | std 比 0.92〜1.15。有意なのは N=1 のみで、効果は +4〜15%。N=3 以降で消える |
+| 勝率 | 0.46〜0.52（ほぼコイン投げ） |
+| 対照（全バーで `val` 符号） | 解放バーに絞っても改善しない。時間足ごとに符号が逆転する |
+
+## 構成
+
+| ファイル | 内容 |
+|---|---|
+| `squeeze_momentum.py` | 指標計算のみ（売買ロジックなし）。Phase 0 |
+| `data/fetch_binance_klines.py` | Binance USD-M Futures kline 取得 + 健全性検査 |
+| `lookahead_check.py` | 切断法によるルックアヘッド検査 + 陰性対照 6 種 |
+| `tests/reference_impl.py` | Pine から独立に書き起こした素朴なループ実装（検算用） |
+| `tests/test_squeeze_momentum.py` | Phase 0 の正確性検証（28 項目） |
+| `tests/tradingview_crosscheck.py` | TradingView 手動照合用の数値ダンプ |
+| `phase1_event_study.py` | Phase 1 のイベント抽出と統計 |
+| `phase1_nearmiss.py` | 最良セルの精査（銘柄別 / 期間分割 / 隣接ホライズン） |
+| `phase1_run.py` | Phase 1 実行とレポート生成 |
+| `COSTS.md` | コスト前提と中止基準（実行前に確定） |
+
+## 実行
+
+```bash
+pip install pandas numpy scipy tabulate
+python3 tests/test_squeeze_momentum.py   # Phase 0: 指標の正確性 (28 項目)
+python3 phase1_run.py                    # Phase 1: イベントスタディ
+```
+
+## データ
+
+- Binance USD-M Futures kline（`data.binance.vision` の月次アーカイブ）
+- 実行環境から `fapi.binance.com` は地域制限（HTTP 451）のため公開ダンプを使用
+- BTCUSDT / ETHUSDT / SOLUSDT × 5m / 15m / 1h
+- 検証期間: 2025-01-01 .. 2026-05-31（全 9 データセットが理論本数と一致、欠損 0 本）
+- **Hold-out: 2026-06-01 .. 2026-08-31 は封印・未使用**（`data/cache/` は 2026-05 で止まる）
+
+## 未解決事項
+
+`COSTS.md` に記載。特に以下は本番検討時に必ず埋めること。
+
+- 両取引所の公式ドキュメントは実行環境の egress proxy で遮断され、手数料は二次情報
+- ボラティリティ拡大局面での往復スリッページが未実測
+
+ただし本結論は**手数料 0%・往復 1 bps という最も甘いコスト前提**で出しているため、
+これらの精度は結論を変えない。

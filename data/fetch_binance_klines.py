@@ -89,8 +89,16 @@ def _describe_missing_pattern(missing: pd.DatetimeIndex) -> list[str]:
 
 
 def _month_range(start: str, end: str) -> list[str]:
+    """[start, end) を覆う月の一覧。end が月初ちょうどならその月は含めない。
+
+    end をそのまま渡すと 2026-06-01 のとき 2026-06 まで取得してしまう。
+    データ自体は後段の open_time < end で除外されるが、
+    「Hold-out 期間のファイルをダウンロードすらしていない」という
+    検証可能な状態を保つため、ここで境界月を落としておく。
+    """
+    last_included = pd.Timestamp(end) - pd.Timedelta(nanoseconds=1)
     months = pd.date_range(pd.Timestamp(start).normalize().replace(day=1),
-                           pd.Timestamp(end), freq="MS")
+                           last_included, freq="MS")
     return [m.strftime("%Y-%m") for m in months]
 
 
