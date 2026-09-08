@@ -27,6 +27,26 @@ Phase 2 以降には進んでいない。**
 | 勝率 | 0.46〜0.52（ほぼコイン投げ） |
 | 対照（全バーで `val` 符号） | 解放バーに絞っても改善しない。時間足ごとに符号が逆転する |
 
+## Phase 1b: 「主役 = WaveTrend / ADX、補助 = スクイーズ」仮説
+
+作者 LazyBear が「ADX や WaveTrend のような追加指標が必要だった」と述べていることから、
+**スクイーズを主役ではなく補助として使った場合に価値があるか**を検証した（Phase 1 とは別の仮説）。
+
+**問 1（主役は単体で方向情報を持つか）で合格セル 0 / 36。** 事前の中止基準により
+問 2（補助の価値）は実施せず、Phase 1b をここで終了した。
+
+| 主役 | 合格セル | Bonferroni 補正後に有意 | CI 下限 > 1.0 bps |
+|---|---|---|---|
+| WaveTrend（10/21/4、標準設定） | 0 / 18 | 0 / 18 | 0 / 18 |
+| ADX（14、閾値 20） | 0 / 18 | 0 / 18 | 0 / 18 |
+
+主検定は ATR 正規化リターンで実施（Phase 1 のレビューを受けた改善。bps でプールすると
+値動きの大きい SOL に平均が引っ張られるため）。勝率はいずれも 0.45〜0.51。
+
+なお、**判定に使わないと事前宣言した副次族**（ADX 閾値 25 / 15 分足）に
+コストを超える数字が出ている。判定は変えていないが、レポートに事実を記載している。
+詳細は [`reports/phase1b_leader_and_squeeze.md`](reports/phase1b_leader_and_squeeze.md)。
+
 ## 構成
 
 | ファイル | 内容 |
@@ -40,6 +60,11 @@ Phase 2 以降には進んでいない。**
 | `phase1_event_study.py` | Phase 1 のイベント抽出と統計 |
 | `phase1_nearmiss.py` | 最良セルの精査（銘柄別 / 期間分割 / 隣接ホライズン） |
 | `phase1_release_definition.py` | 追試: 解放イベント定義（黒→灰 / 黒→青 / 黒→黒以外）の比較 |
+| `main_indicators.py` | Phase 1b の主役: WaveTrend Oscillator と ADX（指標計算のみ）|
+| `phase1b_event_study.py` | Phase 1b のシグナル抽出と統計 |
+| `phase1b_run.py` | Phase 1b 実行とレポート生成（`--report-only` で再集計なしの再出力）|
+| `tests/test_main_indicators.py` | WaveTrend / ADX の正確性検証（30 項目）|
+| `tests/test_phase1b.py` | Phase 1b の集計ロジックの検算（13 項目）|
 | `phase1_run.py` | Phase 1 実行とレポート生成 |
 | `COSTS.md` | コスト前提と中止基準（実行前に確定） |
 
@@ -47,9 +72,12 @@ Phase 2 以降には進んでいない。**
 
 ```bash
 pip install pandas numpy scipy tabulate
-python3 tests/test_squeeze_momentum.py   # Phase 0: 指標の正確性 (28 項目)
-python3 phase1_run.py                    # Phase 1: イベントスタディ
-python3 phase1_release_definition.py     # 追試: 解放イベント定義の比較
+python3 tests/test_squeeze_momentum.py   # Phase 0:  指標の正確性 (28 項目)
+python3 phase1_run.py                    # Phase 1:  イベントスタディ
+python3 phase1_release_definition.py     # 追試:      解放イベント定義の比較
+python3 tests/test_main_indicators.py    # Phase 1b: WaveTrend / ADX の正確性 (30 項目)
+python3 tests/test_phase1b.py            # Phase 1b: 集計ロジックの検算 (13 項目)
+python3 phase1b_run.py                   # Phase 1b: 主役 + 補助の検証
 ```
 
 ## データ
