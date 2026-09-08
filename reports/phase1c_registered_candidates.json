@@ -1,0 +1,59 @@
+[
+  {
+    "family": "adx",
+    "params": {
+      "length": 28,
+      "threshold": 25.0
+    },
+    "interval": "15m",
+    "horizon": 12,
+    "origin": "Part A のグリッド探索 (選定ルール通過)",
+    "part_a_score": 3.0,
+    "part_a_mean_atr": 0.3748572993956179,
+    "part_a_mean_bps": 12.647241622447144,
+    "part_a_n_signals": 804
+  },
+  {
+    "family": "squeeze",
+    "params": {
+      "bb_length": 20,
+      "kc_length": 30,
+      "kc_mult": 2.0
+    },
+    "interval": "1h",
+    "horizon": 3,
+    "origin": "Part A のグリッド探索 (選定ルール通過)",
+    "part_a_score": 3.5,
+    "part_a_mean_atr": 0.34571505564933863,
+    "part_a_mean_bps": 32.05583702696281,
+    "part_a_n_signals": 147
+  },
+  {
+    "family": "adx",
+    "params": {
+      "length": 20,
+      "threshold": 30.0
+    },
+    "interval": "15m",
+    "horizon": 12,
+    "origin": "Part A のグリッド探索 (選定ルール通過)",
+    "part_a_score": 4.333333333333333,
+    "part_a_mean_atr": 0.3211269513998587,
+    "part_a_mean_bps": 7.98391582100126,
+    "part_a_n_signals": 1073
+  },
+  {
+    "family": "adx",
+    "params": {
+      "length": 14,
+      "threshold": 25.0
+    },
+    "interval": "15m",
+    "horizon": 12,
+    "origin": "Phase 1b の副次系列 (選定ルールを経由しない無条件追加)",
+    "part_a_score": 10.333333333333334,
+    "part_a_mean_atr": 0.18390368437529747,
+    "part_a_mean_bps": 7.527597417577197,
+    "part_a_n_signals": 2540
+  }
+]
